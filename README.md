@@ -10,6 +10,8 @@ Built for blockchain security classes at Vilnius University Kaunas Faculty.
 
 ![An attack in progress: the public fork on the left, the attacker's longer fork on the right](_DOCS/51percent/img/image002.png)
 
+<br/>
+
 ## How an attack plays out
 
 1. **Detach.** Open the control panel (the gear in the bottom right corner)
@@ -31,6 +33,8 @@ Built for blockchain security classes at Vilnius University Kaunas Faculty.
 Blocks whose coinbase says `/Public Miner/` are drawn blue as the honest
 chain; every other block counts as the attacker's and is drawn red.
 
+<br/>
+
 ## Run it yourself
 
 All you need is Docker with Compose. To actually win, you also need more
@@ -47,6 +51,8 @@ Then open `http://localhost/`. On the first start the public node needs a
 little while to download the chain; switch the private node on in the
 control panel so it catches up too, and you are ready to detach.
 
+<br/>
+
 ## What's inside
 
 | Service | What it does |
@@ -59,6 +65,8 @@ control panel so it catches up too, and you are ready to detach.
 | `reorg-stratum` | [AnyPool](https://hub.docker.com/r/vuknf/anypool-stratum) mining server on port 3333, feeding the private node |
 
 The database and both chains live in `_DATA/`.
+
+<br/>
 
 ## Working on it
 
