@@ -1,0 +1,174 @@
+services:
+
+  # ------------------------------------------------------------
+  #                    Incoming traffic endpoints
+  # ------------------------------------------------------------
+  reorg-endpoint:
+    container_name: reorg-endpoint
+    image: caddy:2.11-alpine
+    user: 1000:1000
+    read_only: true
+    volumes:
+      - ./endpoint/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - 80:80
+    restart: unless-stopped
+  # ------------------------------------------------------------
+  # ------------------------------------------------------------
+  # ------------------------------------------------------------
+
+
+
+
+
+
+
+
+  # ------------------------------------------------------------
+  #                    51% Reorg Attack Services
+  # ------------------------------------------------------------
+  reorg-vite:
+    container_name: reorg-vite
+
+    # Docker hub
+    image: vuknf/reorg-vite:latest
+
+    # # Self-built
+    # image: reorg-vite
+    # build:
+    #   context: ./vite
+    #   # dockerfile: Dockerfile                                                         # Prod
+    #   dockerfile: Dockerfile.dev                                                     # Dev
+
+    # volumes:                                                                         # Dev
+    #   - ./vite/app:/app                                                              # Dev
+    restart: unless-stopped
+
+
+  reorg-backend:
+    container_name: reorg-backend
+    
+    # Docker hub
+    image: vuknf/reorg-backend:latest
+    
+    # # Self-built
+    # image: reorg-backend
+    # build: ./backend
+    
+    environment:
+      # - APP_DEBUG=True                                                               # Dev
+
+      # Public Fullnode
+      - PUBLIC_PEER_ADDR=reorg-knfcoind-public:49333
+      - PUBLIC_RPC_HOST=reorg-knfcoind-public
+      - PUBLIC_RPC_PORT=19332
+
+      # Private Fullnode
+      - PRIVATE_RPC_HOST=reorg-knfcoind-private
+      - PRIVATE_RPC_PORT=19332
+    volumes:
+      # Configuration
+      - /etc/localtime:/etc/localtime:ro
+
+      # Backend Database
+      - ./_DATA/backend:/data
+
+      # Backend Source Code
+      # - ./backend:/app                                                               # Dev
+    restart: unless-stopped
+  # ------------------------------------------------------------
+  # ------------------------------------------------------------
+  # ------------------------------------------------------------
+
+
+
+
+
+
+
+
+  # ------------------------------------------------------------
+  #                        Blockchain services
+  # ------------------------------------------------------------
+  reorg-knfcoind-public:
+    container_name: reorg-knfcoind-public
+    image: vuknf/knfcoin-fullnode:20260713
+    volumes:
+      - ./_DATA/fullnodes/public:/root/.litecoin
+    command:
+      [
+        "knfcoind",
+        "-server=1",
+        "-txindex=1",
+        "-rpcuser=admin",
+        "-rpcpassword=admin",
+        "-rpcallowip=172.0.0.0/8",
+        "-rpcport=19332",
+        "-rpcbind=0.0.0.0",
+        "-dbcache=512",
+        "-checkblocks=6",
+        "-dnsseed=0",
+        "-addnode=158.129.172.247:49333"
+      ]
+    restart: unless-stopped
+
+
+  reorg-knfcoind-private:
+    container_name: reorg-knfcoind-private
+    image: vuknf/knfcoin-fullnode:20260713
+    volumes:
+      - ./_DATA/fullnodes/private:/root/.litecoin
+    command:
+      [
+        "knfcoind",
+        "-server=1",
+        "-txindex=1",
+        "-rpcuser=admin",
+        "-rpcpassword=admin",
+        "-rpcallowip=172.0.0.0/8",
+        "-rpcport=19332",
+        "-rpcbind=0.0.0.0",
+        "-dbcache=512",
+        "-checkblocks=6",
+        "-dnsseed=0",
+        "-connect=0"
+      ]
+    restart: unless-stopped
+
+
+  reorg-stratum:
+    container_name: reorg-stratum
+    image: vuknf/anypool-stratum:20261019
+    ports:
+      - "3333:3333"
+    environment:
+      # Coin Selection
+      - COIN=KNF
+      - COIN_NETWORK=mainnet
+
+      # Fullnode RPC
+      - RPC_HOST=reorg-knfcoind-private
+      - RPC_PORT=19332
+      - RPC_USER=admin
+      - RPC_PASS=admin
+
+      # Coinbase Transaction
+      - REWARD_ADDR=<Your KNF coin mining reward address> # KNF Full node KNF-VIRTUALI-KK
+      - COINBASE_MESSAGE=/VU KnF 51% attack tool/
+
+      # Pool Settings
+      - POOL_DIFFICULTY=100000
+      - POLL_DIFF_DROPPER=True
+
+      - DEBUG=False
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+  # ------------------------------------------------------------
+  # ------------------------------------------------------------
+  # ------------------------------------------------------------
+
+
+
+
+
